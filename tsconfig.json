@@ -4,7 +4,7 @@
     "module": "Node16",
     "moduleResolution": "Node16",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "mcp-server/src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,5 +12,7 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["src/**/*"]
+  "include": [
+    "mcp-server/src/**/*"
+  ]
 }

@@ -1,12 +1,16 @@
 {
-  "name": "databroker-mcp-server",
+  "name": "@mossforge/databroker-mcp",
   "version": "0.1.0",
   "description": "MCP server for MossForge DataBroker - pay-per-call UK open data via x402 micropayments on Base",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "databroker-mcp-server": "dist/index.js"
+    "databroker-mcp": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
+  "mcpName": "dev.mossforge/databroker",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -20,11 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "tsx": "^4.19.2",
+    "tsx": "^4.23.1",
     "typescript": "^7.0.2"
-  },
-  "mcpName": "dev.mossforge/databroker",
-  "files": [
-    "dist"
-  ]
+  }
 }

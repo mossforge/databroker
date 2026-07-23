@@ -22,9 +22,5 @@
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^7.0.2"
-  },
-  "mcpName": "dev.mossforge/databroker",
-  "files": [
-    "dist"
-  ]
+  }
 }

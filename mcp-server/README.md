@@ -1,6 +1,6 @@
 # databroker-mcp-server
 
-Give any MCP-capable agent (Claude Desktop, Claude Code, Cursor, ...) pay-per-call access to [MossForge DataBroker](https://mossforge.dev) — UK vehicle MOT intelligence, UK-wide reliability analytics, and Companies House / GLEIF entity data — with x402 USDC micropayments on Base mainnet handled automatically. No API keys, no subscription: fund a wallet, ask questions.
+Give any MCP-capable agent (Claude Desktop, Claude Code, Cursor, etc) pay-per-call access to [MossForge DataBroker](https://mossforge.dev) — UK vehicle MOT intelligence, UK-wide reliability analytics, and Companies House / GLEIF entity data — with x402 USDC micropayments on Base mainnet handled automatically. No API keys, no subscription: fund a wallet, ask questions.
 
 ## Tools
 

@@ -1,0 +1,82 @@
+name: mcp-server CI + publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mcp-server/**'
+  pull_request:
+    paths:
+      - 'mcp-server/**'
+
+defaults:
+  run:
+    working-directory: mcp-server
+
+jobs:
+  test:
+    name: typecheck + test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  publish:
+    name: publish to npm
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required - npm exchanges this for a short-lived OIDC publish token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          cache-dependency-path: mcp-server/package-lock.json
+
+      # Trusted Publishing needs npm >= 11.5.1 for OIDC support - the version
+      # bundled with a given Node release can lag behind, so pin explicitly
+      # rather than trusting whatever setup-node ships.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run build
+
+      # Only publish if this version isn't already on the registry - lets you
+      # push docs/CI-only commits to main without needing a version bump each
+      # time, and without the job failing on a duplicate-version publish.
+      - name: Check if version is already published
+        id: check
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || true)
+          if [ "$PUBLISHED" = "$PKG_VERSION" ]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # No token, no secret - npm authenticates this publish via the OIDC
+      # token GitHub issues to this workflow run, matched against the
+      # Trusted Publisher config on npmjs.com for this package (org, repo,
+      # this exact workflow filename). --provenance is automatic under
+      # trusted publishing, but some npm CLI versions have needed it passed
+      # explicitly on the first publish after switching over, so it's kept.
+      - name: Publish
+        if: steps.check.outputs.already_published == 'false'
+        run: npm publish --provenance --access public

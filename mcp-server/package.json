@@ -1,6 +1,6 @@
 {
   "name": "@mossforge/databroker-mcp",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "MCP server for MossForge DataBroker - pay-per-call UK open data via x402 micropayments on Base",
   "type": "module",
   "main": "dist/index.js",
@@ -14,17 +14,26 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@x402/core": "^2.19.0",
+    "@x402/evm": "^2.19.0",
+    "@x402/fetch": "^2.19.0",
     "viem": "^2.55.2",
-    "x402-fetch": "^1.2.0",
     "zod": "^3.24.1"
   },
+  "optionalDependencies": {
+    "@coinbase/cdp-sdk": "*"
+  },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^22.20.1",
     "tsx": "^4.23.1",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^2.1.0"
   }
 }

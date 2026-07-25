@@ -1,28 +1,70 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "dev.mossforge/databroker",
-  "description": "An MCP server that provides [describe what your server does]",
+  "description": "Pay-per-call MCP access to MossForge DataBroker - UK vehicle MOT intelligence, MOT reliability analytics, and Companies House / GLEIF entity data - paid for automatically via x402 USDC micropayments on Base mainnet. No API keys or subscription required.",
   "repository": {
     "url": "https://github.com/mossforge/databroker",
     "source": "github",
     "subfolder": "mcp-server"
   },
-  "version": "1.0.0",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "@mossforge/mcp-server",
-      "version": "1.0.0",
+      "identifier": "@mossforge/databroker-mcp",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
-          "description": "Your API key for the service",
+          "description": "Base URL of the DataBroker API, e.g. https://api.mossforge.dev",
           "isRequired": true,
           "format": "string",
+          "isSecret": false,
+          "name": "DATABROKER_BASE_URL"
+        },
+        {
+          "description": "Signer provider: \"raw\" (default, self-custodied private key) or \"cdp\" (Coinbase CDP-managed wallet)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "DATABROKER_SIGNER"
+        },
+        {
+          "description": "0x-prefixed private key for the paying wallet. Required when DATABROKER_SIGNER=raw (the default).",
+          "isRequired": false,
+          "format": "string",
           "isSecret": true,
-          "name": "YOUR_API_KEY"
+          "name": "DATABROKER_WALLET_KEY"
+        },
+        {
+          "description": "Coinbase CDP API key id. Required when DATABROKER_SIGNER=cdp.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "CDP_API_KEY_ID"
+        },
+        {
+          "description": "Coinbase CDP API key secret. Required when DATABROKER_SIGNER=cdp.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "CDP_API_KEY_SECRET"
+        },
+        {
+          "description": "Coinbase CDP wallet secret. Required when DATABROKER_SIGNER=cdp.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "CDP_WALLET_SECRET"
+        },
+        {
+          "description": "Per-call spend cap in USDC. Calls priced above this are declined before payment.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "DATABROKER_MAX_USDC"
         }
       ]
     }

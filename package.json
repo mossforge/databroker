@@ -13,9 +13,10 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.24.3",
     "viem": "^2.55.2",
-    "x402-fetch": "^1.2.0",
+    "@x402/evm": "^2.19.0",
+    "@x402/fetch": "^2.19.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

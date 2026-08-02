@@ -261,5 +261,5 @@ export function resolveSignerConfig(env: SignerEnv): SignerConfig {
         return { type: "cdp", apiKeyId, apiKeySecret, walletSecret };
     }
 
-    throw new Error(`Unknown DATABROKER_SIGNER "${type}" - expected "raw" or "cdp".`);
+    throw new Error(`Unknown DATABROKER_SIGNER "${type}": expected "raw" or "cdp".`);
 }

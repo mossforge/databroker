@@ -1,9 +1,13 @@
-name: test
+name: test mcp server
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'mcp-server/**'
   pull_request:
+    paths:
+      - 'mcp-server/**'
 
 defaults:
   run:

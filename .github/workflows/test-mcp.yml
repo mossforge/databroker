@@ -29,6 +29,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: debug info
+        run: |
+          node -v
+          npm -v
+          pwd
+          ls -alh
+
       - name: Install dependencies
         run: cd mcp-server && npm ci
 

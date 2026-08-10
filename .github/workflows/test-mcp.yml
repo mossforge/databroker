@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'mcp-server/**'
+      - '.github/workflows/test-mcp.yml'
   pull_request:
     paths:
       - 'mcp-server/**'

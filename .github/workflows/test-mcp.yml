@@ -37,10 +37,10 @@ jobs:
           ls -alh
 
       - name: Install dependencies
-        run: cd mcp-server && npm ci
+        run: npm ci --ignore-scripts
 
       - name: Typecheck
-        run: cd mcp-server && npm run typecheck
+        run: npm run typecheck
 
       - name: Run tests
-        run: cd mcp-server && npm test
+        run: npm test

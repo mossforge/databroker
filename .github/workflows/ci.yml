@@ -1,0 +1,116 @@
+name: ci
+
+# Replaces the old test-mcp.yml AND the `test` job that used to live in
+# release-mcp.yml. Those two ran the same commands on the same paths, burning
+# double the minutes and showing two red X's for one breakage.
+#
+# Release/publish lives in release-mcp.yml and is now tag-triggered, so this
+# file is the only thing that runs on ordinary pushes and PRs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mcp-server/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'mcp-server/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+# Superseded runs on the same branch/PR are pointless once a newer commit
+# lands - cancel them rather than queueing.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mcp-server
+
+jobs:
+  test:
+    name: typecheck + test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel node 24 just because node 22 failed - when they diverge,
+      # seeing both results is the whole point of the matrix.
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: mcp-server/package-lock.json
+
+      # No --ignore-scripts here (the old test-mcp.yml had it, release-mcp.yml
+      # didn't). Install the same way the release job does, or CI isn't
+      # testing what actually ships.
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm test
+
+      # Build in CI too: tsc --noEmit and a real emit can diverge (rootDir and
+      # outDir constraints only bite on emit), and a broken build would
+      # otherwise only surface at publish time.
+      - run: npm run build
+
+  metadata:
+    name: package.json / server.json consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # server.json's version is hand-maintained alongside package.json's.
+      # When they drift, the MCP registry rejects the publish - after npm has
+      # already gone out, leaving a half-released version. Catch it on the PR.
+      - name: Versions and names must agree
+        run: |
+          set -euo pipefail
+
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          PKG_MCP_NAME=$(node -p "require('./package.json').mcpName ?? ''")
+
+          SRV_NAME=$(node -p "require('./server.json').name")
+          SRV_VERSION=$(node -p "require('./server.json').version")
+          SRV_PKG_ID=$(node -p "require('./server.json').packages[0].identifier")
+          SRV_PKG_VERSION=$(node -p "require('./server.json').packages[0].version")
+
+          fail=0
+          check() {
+            if [ "$2" != "$3" ]; then
+              echo "::error::$1 mismatch: '$2' != '$3'"
+              fail=1
+            else
+              echo "ok: $1 = $2"
+            fi
+          }
+
+          check "version (package.json vs server.json)"            "$PKG_VERSION"  "$SRV_VERSION"
+          check "version (package.json vs server.json packages[0])" "$PKG_VERSION" "$SRV_PKG_VERSION"
+          check "npm package name (package.json vs server.json)"    "$PKG_NAME"    "$SRV_PKG_ID"
+          # mcpName in package.json is the npm ownership marker the MCP
+          # registry checks; it must equal server.json's `name`.
+          check "mcpName (package.json vs server.json name)"        "$PKG_MCP_NAME" "$SRV_NAME"
+
+          exit $fail
+
+      # Cheap guard against the class of bug that was already in the repo:
+      # docs and metadata pointing at a host that doesn't serve the API.
+      - name: No stale base URL in docs or metadata
+        run: |
+          set -euo pipefail
+          if grep -rn 'api\.mossforge\.dev' . ../README.md 2>/dev/null | grep -v package-lock.json; then
+            echo "::error::Found 'api.mossforge.dev' - the API is at api.databroker.mossforge.dev"
+            exit 1
+          fi
+          echo "ok: no stale base URLs"

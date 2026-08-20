@@ -1,23 +1,59 @@
 {
   "name": "@mossforge/databroker-mcp",
   "version": "0.4.0",
-  "description": "MCP server for MossForge DataBroker - pay-per-call UK open data via x402 micropayments on Base",
+  "description": "MCP server for MossForge DataBroker - pay-per-call UK vehicle MOT history, MOT analytics, and identifier/reference-data utilities, paid via x402 USDC micropayments on Base. No API key, no account.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "x402",
+    "base",
+    "usdc",
+    "micropayments",
+    "mot",
+    "dvsa",
+    "uk",
+    "vehicle-data",
+    "open-data",
+    "agent-tools"
+  ],
+  "homepage": "https://databroker.mossforge.dev",
+  "bugs": {
+    "url": "https://github.com/mossforge/databroker/issues",
+    "email": "support@mossforge.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mossforge/databroker.git",
+    "directory": "mcp-server"
+  },
+  "license": "MIT",
+  "author": "Mossforge Ltd (https://mossforge.dev)",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "databroker-mcp": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "mcpName": "dev.mossforge/databroker",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -31,7 +67,6 @@
     "@coinbase/cdp-sdk": "^1.46.0"
   },
   "devDependencies": {
-    "@coinbase/cdp-sdk": "^1.55.0",
     "@types/node": "^22.20.1",
     "tsx": "^4.23.1",
     "typescript": "^5.9.3",

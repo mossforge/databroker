@@ -32,6 +32,56 @@ x402 client libraries: [`@coinbase/x402-fetch`](https://www.npmjs.com/package/@c
 (TypeScript), [`x402`](https://pypi.org/project/x402/) (Python),
 [`x402-go`](https://github.com/coinbase/x402-go) (Go).
 
+## Use it from an agent
+
+### MCP server
+
+`@mossforge/databroker-mcp` gives any MCP client (Claude Desktop, Claude Code, Cursor)
+pay-per-call access to everything below, with x402 payment handled for it. No build step:
+
+```json
+{
+  "mcpServers": {
+    "databroker": {
+      "command": "npx",
+      "args": ["-y", "@mossforge/databroker-mcp"],
+      "env": {
+        "DATABROKER_BASE_URL": "https://api.databroker.mossforge.dev",
+        "DATABROKER_WALLET_KEY": "0x...",
+        "DATABROKER_MAX_USDC": "0.50"
+      }
+    }
+  }
+}
+```
+
+Or for Claude Code:
+
+```bash
+claude mcp add --transport stdio \
+  --env DATABROKER_BASE_URL=https://api.databroker.mossforge.dev \
+  --env DATABROKER_WALLET_KEY=0x... \
+  databroker -- npx -y @mossforge/databroker-mcp
+```
+
+**Payment is never automatic.** `databroker_fetch` and `databroker_batch_create` return a
+price quote first and spend nothing until called again with `confirm: true`
+enforced in the server, not left to the model's judgement. Every paid call is additionally
+capped by `DATABROKER_MAX_USDC`; anything priced above the cap is declined before payment.
+See [`mcp-server/`](./mcp-server) for signer options (self-custodied key or Coinbase CDP)
+and security notes.
+
+### Agent skills
+
+Three OpenClaw skills in [`skills/`](./skills), scoped by tier - `mossforge-mot-history`
+(single vehicle), `mossforge-mot-analytics` (fleet statistics), `mossforge-data-utilities`
+(24 identifier/geo/reference endpoints).
+
+### Direct HTTP
+
+Worked examples in [`examples/`](./examples) for Python and TypeScript, both as a plain
+fetch and as an agent tool definition.
+
 ## Endpoints
 
 All paid routes follow the same shape: `GET /v1/{dataset_id}/{key}`. Keys are URL-decoded

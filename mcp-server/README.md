@@ -1,6 +1,6 @@
 # databroker-mcp-server
 
-Give any MCP-capable agent (Claude Desktop, Claude Code, Cursor, etc) pay-per-call access to [MossForge DataBroker](https://mossforge.dev) — UK vehicle MOT intelligence, UK-wide reliability analytics, and Companies House / GLEIF entity data — with x402 USDC micropayments on Base mainnet handled automatically. No API keys, no subscription: fund a wallet, ask questions.
+Give any MCP-capable agent (Claude Desktop, Claude Code, Cursor, etc) pay-per-call access to [MossForge DataBroker](https://mossforge.dev) — UK vehicle MOT intelligence, UK-wide reliability analytics — with x402 USDC micropayments on Base mainnet handled automatically. No API keys, no subscription: fund a wallet, ask questions.
 
 ## Tools
 
@@ -18,28 +18,30 @@ Give any MCP-capable agent (Claude Desktop, Claude Code, Cursor, etc) pay-per-ca
 ## Setup
 
 1. Create a fresh EOA wallet and fund it with a few USDC on **Base mainnet** (plus nothing else — no ETH needed; EIP-3009 transfers are gasless for the payer).
-2. Install:
 
-```bash
-npm install && npm run build
-```
-
-3. Add to Claude Desktop (`claude_desktop_config.json`):
+2. Add to Claude Desktop (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "databroker": {
-      "command": "node",
-      "args": ["/absolute/path/to/databroker-mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@mossforge/databroker-mcp"],
       "env": {
-        "DATABROKER_BASE_URL": "https://api.mossforge.dev",
+        "DATABROKER_BASE_URL": "https://api.databroker.mossforge.dev",
         "DATABROKER_WALLET_KEY": "0x...",
         "DATABROKER_MAX_USDC": "0.50"
       }
     }
   }
 }
+```
+
+```bash
+claude mcp add --transport stdio \
+  --env DATABROKER_BASE_URL=https://api.databroker.mossforge.dev \
+  --env DATABROKER_WALLET_KEY=0x... \
+  databroker -- npx -y @mossforge/databroker-mcp
 ```
 
 4. Ask: _"Should I buy this 2018 Golf, reg AB18 CDE? Check its MOT history and whether the mileage looks genuine."_
@@ -61,7 +63,7 @@ Two signer providers are supported, set via `DATABROKER_SIGNER`:
 
 | Var                     | Required             | Default | Notes                                                              |
 | ----------------------- | -------------------- | ------- | ------------------------------------------------------------------ |
-| `DATABROKER_BASE_URL`   | yes                  | —       | e.g. `https://api.mossforge.dev`                                   |
+| `DATABROKER_BASE_URL`   | yes                  | —       | e.g. `https://api.databroker.mossforge.dev`                        |
 | `DATABROKER_SIGNER`     | no                   | `raw`   | `raw` or `cdp` — see [Who holds the wallet](#who-holds-the-wallet) |
 | `DATABROKER_WALLET_KEY` | yes, if `SIGNER=raw` | —       | 0x-prefixed private key                                            |
 | `CDP_API_KEY_ID`        | yes, if `SIGNER=cdp` | —       | Coinbase CDP API key id                                            |

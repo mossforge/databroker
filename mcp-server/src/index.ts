@@ -86,6 +86,14 @@ const { version: SERVER_VERSION } = JSON.parse(
 const BASE_URL = (process.env.DATABROKER_BASE_URL ?? "").replace(/\/+$/, "");
 const MAX_USDC = Number(process.env.DATABROKER_MAX_USDC ?? "0.50");
 
+if (!Number.isFinite(MAX_USDC) || MAX_USDC <= 0) {
+  console.error(
+    `DATABROKER_MAX_USDC must be a positive number of USDC (e.g. "0.50"), got: ` +
+    `${JSON.stringify(process.env.DATABROKER_MAX_USDC)}`
+  );
+  process.exit(1);
+}
+
 if (!BASE_URL) {
   console.error("DATABROKER_BASE_URL is required");
   process.exit(1);

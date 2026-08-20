@@ -234,7 +234,10 @@ export function resolveSignerConfig(env: SignerEnv): SignerConfig {
     const type = (env.DATABROKER_SIGNER ?? "raw").toLowerCase();
 
     if (type === "raw") {
-        const walletKey = env.DATABROKER_WALLET_KEY ?? "";
+        // X402_PRIVATE_KEY is accepted as a
+        // fallback so a single funded wallet can serve both this server and the
+        // OpenClaw skills in skills/, which use the generic name by convention.
+        const walletKey = env.DATABROKER_WALLET_KEY ?? env.X402_PRIVATE_KEY ?? "";
         if (!RAW_KEY_PATTERN.test(walletKey)) {
             throw new Error(
                 "DATABROKER_WALLET_KEY must be a 0x-prefixed 32-byte hex private key " +

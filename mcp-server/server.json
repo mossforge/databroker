@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "dev.mossforge/databroker",
-  "description": "Pay-per-call MCP access to MossForge DataBroker - UK vehicle MOT intelligence, MOT reliability analytics, and Companies House / GLEIF entity data - paid for automatically via x402 USDC micropayments on Base mainnet. No API keys or subscription required.",
+  "description": "Pay-per-call UK MOT history, reliability analytics and identifier utilities. x402 USDC on Base.",
   "repository": {
     "url": "https://github.com/mossforge/databroker",
     "source": "github",
@@ -18,7 +18,7 @@
       },
       "environmentVariables": [
         {
-          "description": "Base URL of the DataBroker API, e.g. https://api.mossforge.dev",
+          "description": "Base URL of the DataBroker API, e.g. https://api.databroker.mossforge.dev",
           "isRequired": true,
           "format": "string",
           "isSecret": false,

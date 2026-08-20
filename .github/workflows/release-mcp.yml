@@ -1,83 +1,128 @@
-name: mcp-server CI + publish
+name: release mcp-server
+
+# FILENAME MATTERS: npm Trusted Publishing matches the OIDC token against
+# (org, repo, workflow filename). This file keeps the name release-mcp.yml so
+# your existing Trusted Publisher config on npmjs.com keeps working. If you
+# rename it, update the config there too or publishes start 403-ing.
+#
+# Trigger changed from "push to main" to "v* tags". Rationale: the old
+# already-published check worked, but it made release history invisible in git
+# and couldn't cleanly drive the MCP registry publish, which is tag-oriented.
+# Cost is one extra command per release:
+#
+#   npm version patch --workspaces=false   # or edit both versions by hand
+#   # bump mcp-server/server.json to match (ci.yml enforces this)
+#   git commit -am "release v0.4.1" && git tag v0.4.1 && git push --follow-tags
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'mcp-server/**'
-      - '.github/workflows/release-mcp.yml'
-  pull_request:
-    paths:
-      - 'mcp-server/**'
+    tags: ['v*']
+
+permissions:
+  contents: read
 
 defaults:
   run:
     working-directory: mcp-server
 
 jobs:
-  test:
-    name: typecheck + test (node ${{ matrix.node }})
+  release:
+    name: publish to npm + MCP registry
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [22, 24]
+    environment: release # optional: add a required reviewer here for a manual gate
+    permissions:
+      contents: read
+      id-token: write # npm exchanges this for a short-lived OIDC publish token
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
-          cache: 'npm'
+          node-version: 22
+          cache: npm
           cache-dependency-path: mcp-server/package-lock.json
+
+      # Guard first, before anything is published. A tag that disagrees with
+      # package.json is almost always a forgotten version bump, and finding
+      # out after npm publish means burning a version number.
+      - name: Tag must match package.json and server.json
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          SRV_VERSION=$(node -p "require('./server.json').version")
+          SRV_PKG_VERSION=$(node -p "require('./server.json').packages[0].version")
+
+          echo "tag=$TAG_VERSION package.json=$PKG_VERSION server.json=$SRV_VERSION"
+
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ] \
+            || [ "$TAG_VERSION" != "$SRV_VERSION" ] \
+            || [ "$TAG_VERSION" != "$SRV_PKG_VERSION" ]; then
+            echo "::error::Version mismatch. Tag ${GITHUB_REF_NAME} must match package.json ($PKG_VERSION), server.json ($SRV_VERSION) and server.json packages[0] ($SRV_PKG_VERSION)."
+            exit 1
+          fi
+
+      # Trusted Publishing needs npm >= 11.5.1 for OIDC. The npm bundled with a
+      # given Node release lags, so pin explicitly rather than trusting it.
+      - run: npm install -g npm@latest
+
       - run: npm ci
+
+      # Re-run the full suite at the tag. ci.yml already ran on the commit, but
+      # a tag can point anywhere, and this is the last gate before something
+      # immutable goes to a public registry.
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
 
-  publish:
-    name: publish to npm
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write # required - npm exchanges this for a short-lived OIDC publish token
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-          cache-dependency-path: mcp-server/package-lock.json
-
-      # Trusted Publishing needs npm >= 11.5.1 for OIDC support - the version
-      # bundled with a given Node release can lag behind, so pin explicitly
-      # rather than trusting whatever setup-node ships.
-      - run: npm install -g npm@latest
-      - run: npm ci
-      - run: npm run build
-
-      # Only publish if this version isn't already on the registry - lets you
-      # push docs/CI-only commits to main without needing a version bump each
-      # time, and without the job failing on a duplicate-version publish.
-      - name: Check if version is already published
-        id: check
-        run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          PUBLISHED=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || true)
-          if [ "$PUBLISHED" = "$PKG_VERSION" ]; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # No token, no secret - npm authenticates this publish via the OIDC
-      # token GitHub issues to this workflow run, matched against the
-      # Trusted Publisher config on npmjs.com for this package (org, repo,
-      # this exact workflow filename). --provenance is automatic under
-      # trusted publishing, but some npm CLI versions have needed it passed
-      # explicitly on the first publish after switching over, so it's kept.
-      - name: Publish
-        if: steps.check.outputs.already_published == 'false'
+      # --------------------------------------------------------------------
+      # 1. npm
+      # --------------------------------------------------------------------
+      # No NODE_AUTH_TOKEN, no secret: npm authenticates via the OIDC token
+      # GitHub issues to this run, matched against the Trusted Publisher config
+      # for this package. --provenance is implied under trusted publishing but
+      # some CLI versions have needed it explicitly on the first publish after
+      # switching over, so it stays.
+      - name: Publish to npm
         run: npm publish --provenance --access public
+
+      # --------------------------------------------------------------------
+      # 2. MCP registry
+      # --------------------------------------------------------------------
+      # Runs after npm on purpose: the registry validates that the npm package
+      # exists and carries the `mcpName` ownership marker. Publish to the
+      # registry first and this step fails on a package nobody can install yet.
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" \
+            | tar xz mcp-publisher
+          chmod +x ./mcp-publisher
+
+      # AUTHENTICATION - read this before your first release.
+      #
+      # server.json declares the name `dev.mossforge/databroker`, a reverse-DNS
+      # namespace. GitHub OIDC auth CANNOT sign for it: `login github-oidc`
+      # only grants io.github.<user>/* and io.github.<org>/*. So DNS auth it is:
+      #
+      #   1. Generate an Ed25519 keypair.
+      #   2. Publish the public key as a TXT record on mossforge.dev.
+      #   3. Put the PRIVATE key in the repo secret MCP_PRIVATE_KEY.
+      #
+      # ALTERNATIVE, if you'd rather not run a DNS record and a signing key:
+      # rename server.json's `name` (and package.json's `mcpName`) to
+      # io.github.mossforge/databroker, then replace the step below with:
+      #
+      #   - run: ./mcp-publisher login github-oidc
+      #
+      # ...and drop the MCP_PRIVATE_KEY secret entirely. Simpler, but the
+      # registry listing reads io.github.mossforge rather than dev.mossforge.
+      #
+      # The registry is still in preview - verify these flags against
+      # https://modelcontextprotocol.io/registry before your first run.
+      - name: Authenticate to MCP registry (DNS, dev.mossforge/*)
+        run: ./mcp-publisher login dns --domain mossforge.dev --private-key "$MCP_PRIVATE_KEY"
+        env:
+          MCP_PRIVATE_KEY: ${{ secrets.MCP_PRIVATE_KEY }}
+
+      - name: Publish to MCP registry
+        run: ./mcp-publisher publish

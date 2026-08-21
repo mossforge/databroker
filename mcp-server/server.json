@@ -7,12 +7,12 @@
     "source": "github",
     "subfolder": "mcp-server"
   },
-  "version": "0.4.6",
+  "version": "0.4.7",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@mossforge/databroker-mcp",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "transport": {
         "type": "stdio"
       },

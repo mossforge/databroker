@@ -1,18 +1,5 @@
 name: release mcp-server
 
-# FILENAME MATTERS: npm Trusted Publishing matches the OIDC token against
-# (org, repo, workflow filename). This file keeps the name release-mcp.yml so
-# your existing Trusted Publisher config on npmjs.com keeps working. If you
-# rename it, update the config there too or publishes start 403-ing.
-#
-# Trigger changed from "push to main" to "v* tags". Rationale: the old
-# already-published check worked, but it made release history invisible in git
-# and couldn't cleanly drive the MCP registry publish, which is tag-oriented.
-# Cost is one extra command per release:
-#
-#   npm version patch --workspaces=false   # or edit both versions by hand
-#   # bump mcp-server/server.json to match (ci.yml enforces this)
-#   git commit -am "release v0.4.1" && git tag v0.4.1 && git push --follow-tags
 
 on:
   push:
@@ -61,9 +48,20 @@ jobs:
             exit 1
           fi
 
-      # Trusted Publishing needs npm >= 11.5.1 for OIDC. The npm bundled with a
-      # given Node release lags, so pin explicitly rather than trusting it.
-      - run: npm install -g npm@latest
+      # Trusted Publishing needs npm >= 11.5.1 for OIDC. Node 24 bundles 11.3.x,
+      # which is NOT enough - it fails with a misleading ENEEDAUTH rather than
+      # anything mentioning OIDC. Assert rather than assume: a global install
+      # doesn't always win over the toolcache shim on PATH.
+      - name: Ensure OIDC-capable npm
+        run: |
+          npm install -g npm@latest
+          echo "npm: $(npm --version)  ($(which npm))"
+          node -e '
+            const v = process.argv[1].split(".").map(Number);
+            const ok = v[0] > 11 || (v[0] === 11 && (v[1] > 5 || (v[1] === 5 && v[2] >= 1)));
+            if (!ok) { console.error(`::error::npm ${process.argv[1]} < 11.5.1, no OIDC support`); process.exit(1); }
+            console.log("npm version OK for trusted publishing");
+          ' "$(npm --version)"
 
       - run: npm ci
 

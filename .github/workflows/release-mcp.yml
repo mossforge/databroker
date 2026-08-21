@@ -37,18 +37,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: mcp-server/package-lock.json
-
-      - name: Debug OIDC
-        run: |
-          echo "ID token URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+PRESENT}${ACTIONS_ID_TOKEN_REQUEST_URL:-ABSENT}"
-          echo "npm: $(npm --version)"
-          echo "which npm: $(which npm)"
-          echo "--- npm config ---"
-          npm config list
-          cat "${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}" 2>/dev/null || echo "(no userconfig)"
 
       # Guard first, before anything is published. A tag that disagrees with
       # package.json is almost always a forgotten version bump, and finding
@@ -70,9 +61,6 @@ jobs:
             exit 1
           fi
 
-      # Trusted Publishing needs npm >= 11.5.1 for OIDC. The npm bundled with a
-      # given Node release lags, so pin explicitly rather than trusting it.
-      - run: npm install -g npm@latest
 
       - run: npm ci
 

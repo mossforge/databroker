@@ -61,6 +61,9 @@ jobs:
             exit 1
           fi
 
+      # Trusted Publishing needs npm >= 11.5.1 for OIDC. The npm bundled with a
+      # given Node release lags, so pin explicitly rather than trusting it.
+      - run: npm install -g npm@latest
 
       - run: npm ci
 

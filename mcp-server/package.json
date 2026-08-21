@@ -55,6 +55,7 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "version": "npm run sync-server-json && git add server.json",
+    "postversion": "git add package.json package-lock.json server.json && git commit -m \"release v$npm_package_version\" && git tag -a \"v$npm_package_version\" -m \"v$npm_package_version\" && echo \"tagged v$npm_package_version - now: git push --follow-tags\"",
     "sync-server-json": "node -e \"const fs=require('fs'),v=require('./package.json').version,s=JSON.parse(fs.readFileSync('server.json','utf8'));s.version=v;s.packages.forEach(p=>p.version=v);fs.writeFileSync('server.json',JSON.stringify(s,null,2)+'\\n')\""
   },
   "dependencies": {

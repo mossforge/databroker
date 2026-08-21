@@ -29,7 +29,6 @@ jobs:
   release:
     name: publish to npm + MCP registry
     runs-on: ubuntu-latest
-    environment: release # optional: add a required reviewer here for a manual gate
     permissions:
       contents: read
       id-token: write # npm exchanges this for a short-lived OIDC publish token

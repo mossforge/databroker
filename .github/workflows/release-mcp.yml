@@ -41,6 +41,15 @@ jobs:
           cache: npm
           cache-dependency-path: mcp-server/package-lock.json
 
+      - name: Debug OIDC
+        run: |
+          echo "ID token URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+PRESENT}${ACTIONS_ID_TOKEN_REQUEST_URL:-ABSENT}"
+          echo "npm: $(npm --version)"
+          echo "which npm: $(which npm)"
+          echo "--- npm config ---"
+          npm config list
+          cat "${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}" 2>/dev/null || echo "(no userconfig)"
+
       # Guard first, before anything is published. A tag that disagrees with
       # package.json is almost always a forgotten version bump, and finding
       # out after npm publish means burning a version number.

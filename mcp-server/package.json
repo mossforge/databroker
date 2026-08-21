@@ -1,6 +1,6 @@
 {
   "name": "@mossforge/databroker-mcp",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "MCP server for MossForge DataBroker - pay-per-call UK vehicle MOT history, MOT analytics, and identifier/reference-data utilities, paid via x402 USDC micropayments on Base. No API key, no account.",
   "keywords": [
     "mcp",

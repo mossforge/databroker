@@ -28,7 +28,7 @@ and network in a `PAYMENT-REQUIRED` header. Sign an EIP-3009 USDC transfer autho
 with a `PAYMENT-SIGNATURE` header, and the API verifies, settles on-chain, and returns the data
 with a `PAYMENT-RESPONSE` receipt. **A 402 means no funds have moved — you only pay on a 200.**
 
-x402 client libraries: [`@coinbase/x402-fetch`](https://www.npmjs.com/package/@coinbase/x402-fetch)
+x402 client libraries: [`@x402/fetch`](https://www.npmjs.com/package/@x402/fetch)
 (TypeScript), [`x402`](https://pypi.org/project/x402/) (Python),
 [`x402-go`](https://github.com/coinbase/x402-go) (Go).
 

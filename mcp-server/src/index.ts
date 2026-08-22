@@ -6,12 +6,6 @@
  * to any MCP client. Payments are handled via x402 protocol v2 /
  * EIP-3009 USDC transfers on Base mainnet.
  *
- * IMPORTANT: this uses the @x402/* package family (protocol v2 - the
- * PAYMENT-REQUIRED / PAYMENT-SIGNATURE / PAYMENT-RESPONSE header scheme),
- * NOT the older unscoped "x402-fetch" package, which speaks a different
- * (v1, X-PAYMENT-header) wire format and will not interoperate with a
- * server built on @x402/core/server as DataBroker's serving Lambda is.
- *
  * API surface (see DataBroker README + serving-layer.function.ts):
  *   GET  /v1/health                 - no payment, uptime check
  *   GET  /v1/discover               - no payment, lists enabled datasets + prices + kind
@@ -70,10 +64,6 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-// The MCP server's reported version comes from package.json, not a
-// hand-maintained string here - this file lives at src/index.ts in dev (run
-// via tsx) and dist/index.js once built, and package.json sits one level up
-// from both, so the same relative path resolves correctly either way.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { version: SERVER_VERSION } = JSON.parse(
   readFileSync(join(__dirname, "..", "package.json"), "utf8")
